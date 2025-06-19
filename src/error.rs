@@ -1,36 +1,26 @@
-use std;
+use std::io;
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum DiscordRpcError {
+    #[error("Connection failed: {0}")]
     ConnectionFailed(String),
-    IoError(std::io::Error),
-    SerializationError(serde_json::Error),
+
+    #[error("IO error: {0}")]
+    IoError(#[from] io::Error),
+
+    #[error("Serialization error: {0}")]
+    SerializationError(#[from] serde_json::Error),
+
+    #[error("Handshake error: {0}")]
     HandshakeError(String),
+
+    #[error("Not connected to Discord")]
     NotConnected,
-}
 
-impl std::fmt::Display for DiscordRpcError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            DiscordRpcError::ConnectionFailed(msg) => write!(f, "Connection failed: {}", msg),
-            DiscordRpcError::IoError(e) => write!(f, "IO error: {}", e),
-            DiscordRpcError::SerializationError(e) => write!(f, "Serialization error: {}", e),
-            DiscordRpcError::HandshakeError(msg) => write!(f, "Handshake error: {}", msg),
-            DiscordRpcError::NotConnected => write!(f, "Not connected to Discord"),
-        }
-    }
-}
+    #[error("Connection closed unexpectedly")]
+    ConnectionClosed,
 
-impl std::error::Error for DiscordRpcError {}
-
-impl From<std::io::Error> for DiscordRpcError {
-    fn from(error: std::io::Error) -> Self {
-        DiscordRpcError::IoError(error)
-    }
-}
-
-impl From<serde_json::Error> for DiscordRpcError {
-    fn from(error: serde_json::Error) -> Self {
-        DiscordRpcError::SerializationError(error)
-    }
+    #[error("Heartbeat failed: {0}")]
+    HeartbeatFailed(String),
 }
